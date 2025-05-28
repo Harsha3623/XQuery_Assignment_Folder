@@ -1,0 +1,135 @@
+xquery version "1.0-ml";
+
+
+
+(:function to convert json to xml:)
+declare function local:getXMLData($data) {
+  for $key in map:keys($data)
+  let $value := map:get($data, $key)
+  let $type := xdmp:type($value)
+  
+  return
+    if ($value instance of map:map) then (:its an object to pass to main method:)
+        element { $key } {
+        
+        local:getXMLData($value)
+      }
+      
+    else if ($value instance of json:array) then  (: Correct check for JSON array using json:array:)
+      
+        for $subkey in map:keys($value)
+        let $subvalue := map:get($value, $subkey)
+        return
+          if ($subvalue instance of map:map) then
+            element {$key} {
+             local:getXMLData($subvalue) (: recursion for map items in arrays :)
+             }
+          else
+          element { $key } {
+             $subvalue   (: simple element for non-map items in array :)
+          }
+      
+    else
+      element { $key } { $value }  
+};
+
+
+let $json := '
+{
+  "labelResponseOptions": "URL_ONLY",
+  "requestedShipment": {
+    "shipper": {
+      "contact": {
+        "personName": "SHIPPER NAME",
+        "phoneNumber": 1234567890,
+        "companyName": "Shipper Company Name"
+      },
+      "address": {
+        "streetLines": [
+          "SHIPPER STREET LINE 1"
+        ],
+        "city": "HARRISON",
+        "stateOrProvinceCode": "AR",
+        "postalCode": 72601,
+        "countryCode": "US"
+      }
+    },
+    "recipients": [
+      {
+        "contact": {
+          "personName": "RECIPIENT NAME",
+          "phoneNumber": 1234567890,
+          "companyName": "Recipient Company Name"
+        },
+        "address": {
+          "streetLines": [
+            "RECIPIENT STREET LINE 1",
+            "RECIPIENT STREET LINE 2"
+          ],
+          "city": "Collierville",
+          "stateOrProvinceCode": "TN",
+          "postalCode": 38017,
+          "countryCode": "US"
+        }
+      }
+    ],
+    "shipDatestamp": "2023-05-17",
+    "serviceType": "FEDEX_EXPRESS_SAVER",
+    "packagingType": "FEDEX_SMALL_BOX",
+    "pickupType": "USE_SCHEDULED_PICKUP",
+    "blockInsightVisibility": false,
+    "shippingChargesPayment": {
+      "paymentType": "SENDER"
+    },
+    "shipmentSpecialServices": {
+      "specialServiceTypes": [
+        "FEDEX_ONE_RATE"
+      ]
+    },
+    "labelSpecification": {
+      "imageType": "PDF",
+      "labelStockType": "PAPER_85X11_TOP_HALF_LABEL"
+    },
+    "requestedPackageLineItems": [
+      {
+        "declaredValue": {
+          "amount": 200,
+          "currency": "USD"
+        }
+      }
+    ]
+  },
+  "accountNumber": {
+    "value": "740561073"
+  }
+}
+'
+let $json1 := '
+{
+"person": {
+"languages": {
+"language": [
+"English", 
+"French"
+]
+}, 
+"skills": {
+"skill": [
+"XQuery", 
+"JSON", 
+"XML"
+]
+}, 
+"name": "Alice", 
+"age": "30"
+}
+}'
+
+let $parsed := xdmp:from-json-string($json)
+
+
+let $xmlData := element root {
+  local:getXMLData($parsed)
+}
+
+return $xmlData

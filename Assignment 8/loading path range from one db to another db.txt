@@ -1,0 +1,14 @@
+xquery version "1.0-ml";
+
+import module namespace admin = "http://marklogic.com/xdmp/admin"
+      at "/MarkLogic/admin.xqy";
+
+let $database1 := xdmp:database("database1")
+
+let $database2 := xdmp:database("database2")
+
+let $pathRangeIndexes := admin:database-get-range-path-indexes(admin:get-configuration(), $database1)
+
+let $config := admin:database-add-range-path-index(admin:get-configuration(), $database2, $pathRangeIndexes)
+
+return admin:save-configuration($config)

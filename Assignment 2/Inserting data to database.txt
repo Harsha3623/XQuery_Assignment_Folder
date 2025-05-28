@@ -1,0 +1,141 @@
+xquery version "1.0-ml";
+
+(:crating a variable which holds 25 documents :)
+let $document := (<library>
+                  <book>
+                    <bookname>Effective Java</bookname>
+                    <author>JOSHUA BLOCH</author>
+                    <year>2018</year>
+                  </book>
+                  <book>
+                    <bookname>The Complete Referenece Java</bookname>
+                    <author>Herbert Schildt</author>
+                    <year>2018</year>
+                  </book>
+                  <book>
+                    <bookname>Head First Java</bookname>
+                    <author>Kathy Sierra</author>
+                    <year>2005</year>
+                  </book>
+                  <book>
+                    <bookname>Java concurrency in practice</bookname>
+                    <author>Brian Goetz</author>
+                    <year>2006</year>
+                  </book>
+                  <book>
+                    <bookname>Core Java Volume-1 Fundamentals</bookname>
+                    <author>Cay S Horstmann</author>
+                    <year>2022</year>
+                  </book>
+                  <book>
+                    <bookname>SQL in 10 minutes</bookname>
+                    <author>Ben Forta</author>
+                    <year>2019</year>
+                  </book>
+                  <book>
+                    <bookname>LEarning SQL</bookname>
+                    <author>Alan Beaulieu</author>
+                    <year>2020</year>
+                  </book>
+                  <book>
+                    <bookname>SQL for smarties: advanced sql</bookname>
+                    <author>Joe Celko</author>
+                    <year>2005</year>
+                  </book>
+                  <book>
+                    <bookname>SQL performance explained</bookname>
+                    <author>Markus Winand</author>
+                    <year>2012</year>
+                  </book>
+                  <book>
+                    <bookname>The Complete sql reference</bookname>
+                    <author>James R. Groff, Paul N. Weinberg</author>
+                    <year>2011</year>
+                  </book>
+                  <book>
+                    <bookname>Automate the boring stuff with python</bookname>
+                    <author>Al Sweigart</author>
+                    <year>2019</year>
+                  </book>
+                  <book>
+                    <bookname>Python crash course</bookname>
+                    <author>Eric Matthes</author>
+                    <year>2019</year>
+                  </book>
+                  <book>
+                    <bookname>Fluent Python</bookname>
+                    <author>Luciano Ramalho</author>
+                    <year>2022</year>
+                  </book>
+                  <book>
+                    <bookname>Effective Python: 90 Specific Ways to Write Better Python</bookname>
+                    <author>Brett Slatkin</author>
+                    <year>2019</year>
+                  </book>
+                  <book>
+                    <bookname>Python Cookbook</bookname>
+                    <author>David Beazley</author>
+                    <year>2013</year>
+                  </book> 
+                  <book>
+                    <bookname>Docker Deep Dive</bookname>
+                    <author>Nigel Poulton</author>
+                    <year>2023</year>
+                  </book>
+                  <book>
+                    <bookname>Docker In Action</bookname>
+                    <author>Jeff Nickoloff</author>
+                    <year>2019</year>
+                  </book>
+                  <book>
+                    <bookname>Using Docker</bookname>
+                    <author>Adrian Group</author>
+                    <year>2015</year>
+                  </book>
+                  <book>
+                    <bookname>The Docker Book: Containerization is the New Virtualization</bookname>
+                    <author>James Turnbull</author>
+                    <year>2014</year>
+                  </book>
+                  <book>
+                    <bookname>Learn Docker – Fundamentals of Docker 19.x</bookname>
+                    <author>Gabriel N. Schenker</author>
+                    <year>2020</year>
+                  </book> 
+                  <book>
+                    <bookname>Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow</bookname>
+                    <author>Aurelien Gerop</author>
+                    <year>2022</year>
+                  </book>
+                  <book>
+                    <bookname>Pattern Recognition and Machine Learning</bookname>
+                    <author>Christopher M. Bishop</author>
+                    <year>2006</year>
+                  </book>
+                  <book>
+                    <bookname>Artificial Intelligence: A Modern Approach</bookname>
+                    <author>Stuart Russell </author>
+                    <year>2020</year>
+                  </book>
+                  <book>
+                    <bookname>Deep Learning</bookname>
+                    <author>Ian Goodfellow</author>
+                    <year>2016</year>
+                  </book>
+                  <book>
+                    <bookname>Machine Learning Yearning</bookname>
+                    <author>Andrew Ng</author>
+                    <year>2018</year>
+                  </book>
+                  </library>)
+                  
+(:getting the count of book documents presnet in variable:)
+let $count := fn:count($document//book)   
+
+(:output string value:)
+let $result := ("Document Inserted: "||$count||" document length")
+
+return (xdmp:document-insert("/XML/Library/Book", $document, (), ("UCBOS","BOOKS")),$result)
+                  
+                  
+                  

@@ -1,0 +1,9 @@
+xquery version "1.0-ml";
+
+let $document := fn:doc("/UCBOS/Library/Book")/library/book/author
+
+(:replacing the node by using the lower case author name:)
+for $data in $document
+let $lowerAuthor := fn:lower-case($data/text())
+
+return xdmp:node-replace($data, <author>{$lowerAuthor}</author>)

@@ -1,0 +1,41 @@
+xquery version "1.0-ml";
+
+(:loading data to the variable:)
+let $root := 
+(<library>
+  <book>
+    <title>Java</title>
+    <author>Herbert Schildt</author>
+    <year>2024</year>
+  </book>
+  <book>
+    <title>XQuery</title>
+    <author>Michael Brundage</author>
+    <year>2025</year>
+  </book>
+  <book>
+    <title>XML</title>
+    <author>Steven Holzner</author>
+    <year>2023</year>
+  </book>
+  <book>
+    <title>Python</title>
+    <author>Eric Matthes</author>
+    <year>2024</year>
+  </book>
+  <book>
+    <title>C++</title>
+    <author>Bjarne Stroustrup</author>
+    <year>2025</year>
+  </book>
+  <book>
+    <title>HTML</title>
+    <author>Ben Frain</author>
+    <year>2021</year>
+  </book>
+</library>)
+
+(:Inserting into the db using the xdmp:document-insert:)
+return xdmp:document-insert("/integration/Assignment_001",
+$root, (),
+("Assignment","UCBOS","Books"))

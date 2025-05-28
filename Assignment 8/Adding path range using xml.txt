@@ -1,0 +1,23 @@
+xquery version "1.0-ml";
+
+import module namespace admin = "http://marklogic.com/xdmp/admin"
+      at "/MarkLogic/admin.xqy";
+
+let $doc := fn:doc("xml/data.xml")/data/range-path-index
+
+let $pathSpec :=  for $data in  $doc 
+                      return (
+                      admin:database-range-path-index(
+                          xdmp:database('myNewDatabase'),
+                          $data/scalar-type,
+                          $data/path-expression,
+                          $data/collation,
+                          if(lower-case($data/range-value-positions) eq "true") then fn:true() else fn:false(),
+                          $data/invalid-values)
+                      
+                      )
+
+let $config := admin:database-add-range-path-index(admin:get-configuration(),xdmp:database("myNewDatabase"),$pathSpec)
+return admin:save-configuration($config)
+
+

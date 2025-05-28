@@ -1,0 +1,8 @@
+xquery version "1.0-ml";
+
+(:forest creation:)
+
+import module namespace admin = "http://marklogic.com/xdmp/admin"
+		  at "/MarkLogic/admin.xqy";
+
+admin:save-configuration(admin:forest-create(admin:get-configuration(), "newForest", xdmp:host(), ()))

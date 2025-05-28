@@ -1,0 +1,22 @@
+xquery version "1.0-ml";
+
+import module namespace admin = "http://marklogic.com/xdmp/admin"
+		  at "/MarkLogic/admin.xqy";
+
+let $config := admin:get-configuration()
+let $database := 
+  admin:database-create($config, "database1",
+            xdmp:database("Security"), xdmp:database("Schemas"))
+ 
+return admin:save-configuration($database)
+
+
+
+
+
+let $config := admin:get-configuration()
+let $database := 
+  admin:database-create($config, "database2",
+            xdmp:database("Security"), xdmp:database("Schemas"))
+ 
+return admin:save-configuration($database)

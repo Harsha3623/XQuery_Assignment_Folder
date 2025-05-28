@@ -1,0 +1,10 @@
+xquery version "1.0-ml";
+
+(: deleting the node:)
+let $document := fn:doc("/integration/Assignment_001")/library/book
+
+let $currentyear := year-from-date(current-date())
+
+for $book in $document
+where ($book/year) lt ( $currentyear - 3)
+return (xdmp:node-delete($book),"deleted book",$book/title)

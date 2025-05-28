@@ -1,0 +1,6 @@
+xquery version "1.0-ml";
+
+(:Loading data to the variable:)
+let $document := fn:doc("/integration/Assignment_001")/library/book
+
+return <AllBooks>{$document}</AllBooks>

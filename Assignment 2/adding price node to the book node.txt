@@ -1,0 +1,22 @@
+xquery version "1.0-ml";
+
+import module namespace admin = "http://marklogic.com/xdmp/admin"
+		  at "/MarkLogic/admin.xqy";
+      
+      
+(:defining a custom function which would return random value:)
+
+declare function local:randomValue() as xs:integer{
+    let $min:= 500
+    return $min +xdmp:random(1500)
+};
+
+
+let $document := fn:doc("/UCBOS/Library/Book")/library/book
+
+(:writing a new node to the document:)
+for $i in $document
+return xdmp:node-insert-child($i, <price>{local:randomValue()}</price>)
+
+
+

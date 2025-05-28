@@ -1,0 +1,29 @@
+xquery version "1.0-ml";
+
+
+(:function to check the value price range using minimum price and maximum price :)
+declare function local:groupingByPrice(
+                                       $min,
+                                       $max,
+                                       $node as element(library)
+                                                            ) as element()* {
+
+      for $book in $node/book
+       where xs:integer($book/price) ge $min and ($book/price) le $max
+        return $book
+};
+
+
+let $doc := fn:doc("/UCBOS/Library/Book")/library
+
+let $min := (500,1001)
+let $max := (1000,2000)
+
+(:i means the value and pos means the index value in the sequence min:)
+for $i at $pos in $min
+
+return element {"priceRange"}{
+          element {"PriceBy-"||$min[$pos]||"-"||$max[$pos]}{
+           local:groupingByPrice($min[$pos],$max[$pos],$doc)
+          }
+}

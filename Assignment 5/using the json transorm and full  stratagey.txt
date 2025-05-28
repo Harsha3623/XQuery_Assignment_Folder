@@ -1,0 +1,8 @@
+xquery version "1.0-ml";
+import module namespace json = "http://marklogic.com/xdmp/json"
+    at "/MarkLogic/json/json.xqy";
+let $c := json:config("full")
+            => map:with("whitespace", "ignore")
+ let   $j := json:transform-to-json(fn:doc("/books/books.xml"),$c)
+  let  $xj := json:transform-from-json($j,$c)
+return ($j, $xj)

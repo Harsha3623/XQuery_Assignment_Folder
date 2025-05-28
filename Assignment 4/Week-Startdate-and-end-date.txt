@@ -1,0 +1,5 @@
+        
+let $weekDay := (xdmp:weekday-from-date(fn:current-date())) - 1
+let $weekStartDay := fn:current-date() - xs:dayTimeDuration('P' || $weekDay || 'D')
+let $weekEndDay   := $weekStartDay + xs:dayTimeDuration('P6D')
+return ($weekStartDay, $weekEndDay)

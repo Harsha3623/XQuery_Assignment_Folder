@@ -1,0 +1,12 @@
+xquery version "1.0-ml";
+(:loading:)
+let $document := fn:doc("/integration/Assignment_001")/library/book
+(:loading authors :)
+let $authors :=  fn:distinct-values($document/author)
+
+(:iteriating using for loop and getting the count of books written by them:)
+for $author in $authors 
+let $count := count($document[author = $author])
+
+return <AuthorBooks><author>{$author}</author>
+        <BookCount>{$count}</BookCount></AuthorBooks>

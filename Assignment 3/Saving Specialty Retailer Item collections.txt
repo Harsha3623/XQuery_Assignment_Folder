@@ -1,0 +1,35 @@
+xquery version "1.0-ml";
+
+
+
+let $doc1 := <root>
+                <SpecialtyRetailerItem>
+                      <ItemUPC>UCBOS1</ItemUPC>
+                      <ItemNumber>SKUA</ItemNumber>
+                      <AlternateItemNo>SKUB</AlternateItemNo>
+                </SpecialtyRetailerItem>
+            </root>
+            
+let $doc1_uri := "/SpecialtyRetailerItem/Document1"
+
+
+
+let $doc2 := <root>
+                <SpecialtyRetailerItem>
+                      <ItemUPC>UCBOS2</ItemUPC>
+                      <ItemNumber>SKUB</ItemNumber>
+                      
+                </SpecialtyRetailerItem>
+            </root>
+            
+let $doc2_uri := "/SpecialtyRetailerItem/Document2"
+
+
+
+return (
+        xdmp:document-insert($doc1_uri, $doc1, (), ("Specialty Retailer Item")),
+        xdmp:document-insert($doc2_uri, $doc2,(), ("Specialty Retailer Item")),
+        "Document inserted to collection Speciality Retailer Item"
+        )
+
+

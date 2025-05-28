@@ -1,0 +1,15 @@
+xquery version "1.0-ml";
+
+(:function to get the high value books:)
+declare function local:getHighPriceBook()  {
+  let $document := fn:doc("/UCBOS/Library/Book")/library
+
+  for $book in $document/book
+  where $book/price gt 1500
+  return $book
+};
+
+(:storing the value to varible for inserting to new uri:)
+let $result:=<HighValueBooks>{local:getHighPriceBook()}</HighValueBooks>
+
+return xdmp:document-insert("/UCBOS/Library/HighValueBooks", $result)

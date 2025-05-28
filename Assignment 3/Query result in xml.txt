@@ -1,0 +1,37 @@
+xquery version "1.0-ml";
+
+(:function o retrive the quantity of the item:)
+declare function local:getItemQuantity($itmNumber as xs:string) as xs:integer* {
+    for $item in collection("Enterprise Inventory")
+    where $item//AllocationStatus eq "Available" and $item//ItemNumber eq $itmNumber
+    return $item//Quantity
+};
+
+(:function to retreive the item status:)
+declare function local:getItemStatus($itmNumber as xs:string) as xs:string* {
+    for $item in collection("Enterprise Inventory")
+    where $item//ItemNumber eq $itmNumber
+    return $item//AllocationStatus/text()
+};
+
+(:iterating through all the collections:)
+for $retailer in collection("Specialty Retailer Item")
+
+let $masterId := $retailer//ItemUPC
+let $itemNumber := $retailer//ItemNumber
+let $alternateItemNumber := $retailer//AlternateItemNo
+
+let $sumItems := sum(local:getItemQuantity($itemNumber))
+let $sumAlternateItems := sum(local:getItemQuantity($alternateItemNumber))
+let $totalQuantity := $sumItems + $sumAlternateItems
+
+return (<EnterpriseInventoryDashboard>
+
+        <GlobalMasterID>{$masterId/text()}</GlobalMasterID>
+        <ItemNumber>{$itemNumber/text()}</ItemNumber>
+        <AlternateItemNumber>{$alternateItemNumber/text()}</AlternateItemNumber>
+        <TotalQuantity>{$totalQuantity}</TotalQuantity>
+        <Status>{local:getItemStatus($itemNumber)}</Status>
+        
+      </EnterpriseInventoryDashboard>
+      )

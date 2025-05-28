@@ -1,0 +1,33 @@
+xquery version "1.0-ml";
+
+import module namespace admin = "http://marklogic.com/xdmp/admin"
+      at "/MarkLogic/admin.xqy";
+
+
+let $data := xdmp:from-json-string(xdmp:filesystem-file("C:\Users\Harsha\Desktop\xmlData.xml"))
+
+let $values := map:get($data,"range-path-index")
+
+let $pathspace := for $data in json:array-values($values)
+                    return (
+                    
+                        let $scalar-type := map:get($data,"scalar-type")
+                        let $path-expression := map:get($data,"path-expression")
+                        let $collation-val := map:get($data,"collation")
+                        let $range-value-positions := map:get($data,"range-value-positions")
+                        let $invalid-values := map:get($data,"invalid-values")
+                        
+                        return   admin:database-range-path-index(
+                                  xdmp:database('database1'),
+                                  $scalar-type,
+                                  $path-expression,
+                                  $collation-val,
+                                  if(lower-case(xs:string($range-value-positions)) eq "true") then fn:true() else fn:false(),
+                                  $invalid-values)
+                        
+                    )
+return
+    admin:save-configuration(admin:database-add-range-path-index(admin:get-configuration(), xdmp:database("database1"), $pathspace))
+    
+    
+

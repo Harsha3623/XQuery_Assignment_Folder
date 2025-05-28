@@ -1,0 +1,52 @@
+xquery version "1.0-ml";
+
+
+(:function to convert the data types and return the converted types:)
+declare function local:convertValue($val-original, $val-template) {
+ let $data := xdmp:type($val-template)
+ 
+  return $data
+};
+
+
+declare function local:convertDatatypes($original, $template, $map) {
+  for $key in map:keys($original)
+  let $val-original := map:get($original, $key)
+  let $val-template := map:get($template, $key)
+  let $converted := 
+    if (exists($val-template)) then
+      local:convertValue($val-original, $val-template)
+    else
+      ($val-original)
+  return map:put($map, $key, $converted)
+  
+};
+
+
+
+let $json1 := '
+{
+  "SourceCode": "8"
+}'
+
+
+(:original:)
+let $json2 := '
+{
+	
+	"SourceCode": 800
+}'
+
+
+(:json1 data :)
+let $parsed := xdmp:from-json-string($json1)
+
+(:sjon2 data:)
+let $original := xdmp:from-json-string($json2)
+
+
+(:mapper:)
+let $result-map := map:map()
+
+let $converted := local:convertDatatypes($original, $parsed, $result-map)
+return xdmp:to-json($result-map)

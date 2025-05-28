@@ -1,0 +1,80 @@
+xquery version "1.0";
+
+(:xquery for printing pattern like 
+1
+2 3
+4 5 6
+7 8 9 10
+11 12 13 14 15
+16 17 18 19 20 21
+:)
+
+let $line := 6
+let $pattern := string-join(for $i in 1 to $line
+                              return string-join( for $j in 1 to $i 
+                                                  return xs:string($j + sum(1 to $i - 1))," ")
+                          ,"&#10;")
+return $pattern        
+==========================================
+(:xquery for printing pattern like 
+21 20 19 18 17 16
+15 14 13 12 11
+10 9 8 7
+6 5 4
+3 2
+1
+:)
+
+let $line := 7
+let $pattern := string-join(for $i in 1 to $line
+                               return string-join( for $j in 1 to $line - $i 
+                                                  return xs:string(sum(1 to $line - $i )+ 1 - $j )," ")
+                          ,"&#10;")
+return $pattern 
+========================================
+
+(:xquery for printing pattern like 
+1
+1 2
+1 2 3
+1 2 3 4
+1 2 3 4 5
+1 2 3 4 5 6
+1 2 3 4 5 6 7
+1 2 3 4 5 6 7 8
+1 2 3 4 5 6 7 8 9
+1 2 3 4 5 6 7 8 9 10
+
+:)
+
+
+let $number := string-join((for $i in 1 to 10 
+               return string-join(for $j in 1 to $i return (xs:string($j))," ")), "&#10;")
+                
+return $number
+
+
+======================================
+(:pattern
+1
+2 3
+4 5 6
+7 8 9 10
+11 12 13 14 15
+16
+:)
+
+xquery version "1.0-ml";
+
+
+
+let $number := 16
+
+return string-join(for $i in 1 to $number
+                              return string-join( for $j in 1 to $i 
+                                                  return (
+                                                    
+                                                  if(($j + sum(1 to $i - 1)) le ($number)) then(xs:string($j + sum(1 to $i - 1))) else ()
+                                                  
+                                                  ) ," ") 
+                          ,"&#10;")

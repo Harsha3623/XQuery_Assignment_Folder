@@ -1,0 +1,11 @@
+xquery version "1.0-ml";
+
+let $database := xdmp:database("Documents")
+
+return xdmp:eval("doc('/UCBOS/Library/Book')", 
+                  (),
+                  <options xmlns="xdmp:eval">
+		                  <database>{$database}</database>
+		              </options>)
+(:=> The '/UCBOS/Library/Book' document from the
+   Documents database.:)

@@ -1,0 +1,13 @@
+xquery version "1.0-ml";
+
+(:loading root uri:)
+let $document := fn:doc("/integration/Assignment_001")/library
+
+(:writing data to the new variable:)
+let $update := (<book>
+                <title>Docker</title>
+                  <author>Herbert</author>
+                      <year>2003</year>
+                          </book>)
+                          
+return xdmp:node-insert-child($document, $update),"Inersted a new node to the root element: library updated "

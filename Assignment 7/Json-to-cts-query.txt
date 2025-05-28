@@ -1,0 +1,90 @@
+xquery version "1.0-ml";
+
+
+declare function local:iterateArray($rule) {
+  let $data :=  for $val in json:array-values($rule)
+                let $condition :=  map:get($val,"condition")
+                let $cleanData := if(exists($condition)) then  local:iterateJson($val)
+                                  else(
+                                  let $field := map:get($val,"field")
+                                  let $operator := map:get($val,"operator")
+                                  let $value := (map:get($val,"value"))
+                                  let $value := if(xdmp:type($value) eq xs:QName("xs:string") or xdmp:type($value) eq xs:QName("xs:untypedAtomic")) then (
+                                                    ('"'||$value||'"')
+                                                  )else $value
+                                  return 'cts:path-range-query("'||$field||'","'||$operator||'",'||($value)||')'
+                                  ) 
+                                  
+                  return ($cleanData)
+                  
+         return ('('||string-join($data,',')||')')
+
+};
+
+declare function local:iterateJson($parsed){
+  
+  let $condition := map:get($parsed,"condition")
+  let $cts := if(fn:lower-case($condition) eq "and") then ('cts:and-query(') else if (fn:lower-case($condition) eq "or") then ('cts:or-query(') else ('cts:not-query(')
+  let $rule := map:get($parsed,"rules")
+  let $data :=   local:iterateArray($rule)
+               
+               
+  let $v := ($cts,$data||")")
+  return string-join($v,"")
+
+};
+
+let $json := '
+{
+  "condition": "ANd",
+  "rules": [
+    {"field": "C1", "operator": "=", "value": "some_value"},
+    {"field": "C2", "operator": ">=", "value": "some_value"},
+    {
+      "condition": "or",
+      "rules": [
+        {
+          "condition": "and",
+          "rules": [
+            {"field": "C3", "operator": ">", "value": 10},
+            {"field": "C6", "operator": "<", "value": 20}
+          ]
+        },
+        {
+          "condition": "not",
+          "rules": [
+            {"field": "C4", "operator": "<=", "value": 50},
+                {"field": "C1", "operator": "=", "value": "some_value"},
+    {"field": "C2", "operator": ">=", "value": "some_value"},
+    {
+      "condition": "or",
+      "rules": [
+        {
+          "condition": "and",
+          "rules": [
+            {"field": "C3", "operator": ">", "value": 10},
+            {"field": "C6", "operator": "<", "value": 20}
+          ]
+        },
+        {
+          "condition": "not",
+          "rules": [
+            {"field": "C4", "operator": "<=", "value": 50}
+          ]
+        }
+        
+      ]
+    }
+          ]
+        }
+        
+      ]
+    }
+  ]
+}
+'
+
+let $parsed := xdmp:from-json-string($json)
+let $output := local:iterateJson($parsed)
+
+return xdmp:eval($output)

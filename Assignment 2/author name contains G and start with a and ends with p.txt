@@ -1,0 +1,13 @@
+xquery version "1.0-ml";
+
+let $document := fn:doc("/UCBOS/Library/Book")/library
+
+let $result := for $book in $document/book
+                where $book/year gt 2020 and fn:contains(fn:lower-case($book/author/text()),"g") 
+                                  and fn:starts-with(fn:lower-case($book/author/text()),"a") 
+                                    and fn:ends-with(fn:lower-case($book/author/text()),"p")
+                  return $book
+                 
+return 
+  if (exists($result)) then $result
+  else "No matching data"

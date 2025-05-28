@@ -1,0 +1,50 @@
+xquery version "1.0-ml";
+
+
+
+(:recursive function to print the Interval duration:)
+declare function local:printInterval($start , $end , $intval, $attVal) {
+
+  if ($start ge $end or  $end gt $end_time ) then ()
+  
+   else(
+      element {"interval"}{
+      
+      (:Mentioning the attribute value in custom element:)
+      attribute attr {$attVal},
+      
+        (:fornmatting time:)
+        <startdatetime>{format-dateTime($start, "  [M01]-[D01]-[Y0001]  [H01]:[m01]:[s01]  ")}</startdatetime>,
+        <enddatetime>{format-dateTime($end - xs:dayTimeDuration("PT01S"), "  [M01]-[D01]-[Y0001]  [H01]:[m01]:[s01]  ")}</enddatetime>
+        
+      }, if(($end+$intval gt $end_time) and ( $end ne $end_time)) then (
+      
+          element {"interval"}{
+      
+          (:Mentioning the attribute value in custom element:)
+          attribute attr {$attVal+1},
+      
+            (:fornmatting time:)
+              <startdatetime>{format-dateTime($end , "  [M01]-[D01]-[Y0001]  [H01]:[m01]:[s01]  ")}</startdatetime>,
+              <enddatetime>{format-dateTime($end_time, "  [M01]-[D01]-[Y0001]  [H01]:[m01]:[s01]  ")}</enddatetime>
+        
+          }
+          
+      )else(
+            local:printInterval($start+$intval, $end+$intval , $intval,$attVal+1)
+          ) 
+      )
+};
+
+
+
+
+(:Gloabl variable end date time:)
+declare variable $end_time := xs:dateTime("2025-05-22T22:59:40");
+
+
+let $start_time := xs:dateTime("2025-05-21T09:59:59")
+
+let $interval := xs:dayTimeDuration("PT1H")
+
+return <IntervalDetails>{ local:printInterval($start_time, $start_time+$interval, $interval,1) }</IntervalDetails>

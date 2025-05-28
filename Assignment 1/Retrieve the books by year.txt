@@ -1,0 +1,8 @@
+xquery version "1.0-ml";
+(:loading:)
+let $document := fn:doc("/integration/Assignment_001")/library/book
+
+(:iterating and getting the books by year i.e books year mnore than 2023:)
+for $book in $document
+where $book/year gt 2023
+return <books>{$book}</books>

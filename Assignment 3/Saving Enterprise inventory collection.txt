@@ -1,0 +1,32 @@
+xquery version "1.0-ml";
+
+
+let $doc1 := <Inventory>
+                <EnterpriseInventory>
+                    <ItemNumber>SKUA</ItemNumber>
+                    <Quantity>10</Quantity>
+                    <AllocationStatus>Available</AllocationStatus>
+                </EnterpriseInventory>
+            </Inventory>
+            
+let $doc1_uri := "/EnterpriseInventory/Document1"
+
+
+
+let $doc2 := <Inventory>
+                <EnterpriseInventory>
+                      <ItemNumber>SKUB</ItemNumber>
+                      <Quantity>30</Quantity>
+                      <AllocationStatus>Available</AllocationStatus>
+                </EnterpriseInventory>
+              </Inventory>
+              
+let $doc2_uri := "/EnterpriseInventory/Document2"
+
+
+return (
+        xdmp:document-insert($doc1_uri, $doc1, (), ("Enterprise Inventory")),
+        xdmp:document-insert($doc2_uri, $doc2,(), ("Enterprise Inventory")),
+        "Document inserted to collection Enterprise Inventory"
+        )
+

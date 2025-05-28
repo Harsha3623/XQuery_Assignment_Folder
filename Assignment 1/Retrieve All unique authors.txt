@@ -1,0 +1,13 @@
+xquery version "1.0-ml";
+
+(:root element:)
+<UniqueAuthor>{
+
+(:loading data into variable by author name and filtering to unique constarint:)
+let $document := fn:distinct-values(fn:doc("/integration/Assignment_001")/library/book/author)
+
+for $author in $document
+return <AuthorName>{$author}</AuthorName>
+
+}
+</UniqueAuthor>

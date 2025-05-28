@@ -1,0 +1,111 @@
+xquery version "1.0-ml";
+
+declare function local:mapArray($nodes ) {
+  let $tag := local-name($nodes[1])
+  let $values := 
+    for $node in $nodes
+    return
+      if (count($node/*) ne 0)
+      then local:mapObjects($node)
+      else string($node)
+  return
+    if (count($values) eq 1) then $values[1] else $values
+};
+
+declare function local:mapObjects($parent ) {
+  let $map := map:map()
+  let $tags := distinct-values($parent/*/local-name())
+  let $key-value :=
+    for $tag in $tags
+    let $children := $parent/*[local-name() eq $tag]
+    return map:put(
+      $map,
+      $tag,
+      if (count($children) gt 1)
+      then local:mapArray($children)
+      else
+        if (count($children[1]/*) ne 0)
+        then local:mapObjects($children[1])
+        else string($children[1])
+    )
+  return $map
+};
+
+
+let $xml := <root>
+<labelResponseOptions>URL_ONLY</labelResponseOptions>
+<requestedShipment>
+<shipper>
+<contact>
+<personName>SHIPPER NAME</personName>
+<phoneNumber>1234567890</phoneNumber>
+<companyName>Shipper Company Name</companyName>
+</contact>
+<address>
+<streetLines>SHIPPER STREET LINE 1</streetLines>
+<city>HARRISON</city>
+<stateOrProvinceCode>AR</stateOrProvinceCode>
+<postalCode>72601</postalCode>
+<countryCode>US</countryCode>
+</address>
+</shipper>
+<recipients>
+<contact>
+<personName>RECIPIENT NAME</personName>
+<phoneNumber>1234567890</phoneNumber>
+<companyName>Recipient Company Name</companyName>
+</contact>
+<address>
+<streetLines>RECIPIENT STREET LINE 1</streetLines>
+<streetLines>RECIPIENT STREET LINE 2</streetLines>
+<city>Collierville</city>
+<stateOrProvinceCode>TN</stateOrProvinceCode>
+<postalCode>38017</postalCode>
+<countryCode>US</countryCode>
+</address>
+</recipients>
+<shipDatestamp>2023-05-17</shipDatestamp>
+<serviceType>FEDEX_EXPRESS_SAVER</serviceType>
+<packagingType>FEDEX_SMALL_BOX</packagingType>
+<pickupType>USE_SCHEDULED_PICKUP</pickupType>
+<blockInsightVisibility>false</blockInsightVisibility>
+<shippingChargesPayment>
+<paymentType>SENDER</paymentType>
+</shippingChargesPayment>
+
+<shipmentSpecialServices>
+<specialServiceTypes>FEDEX_ONE_RATE</specialServiceTypes>
+</shipmentSpecialServices>
+
+
+<labelSpecification>
+<imageType>PDF</imageType>
+<labelStockType>PAPER_85X11_TOP_HALF_LABEL</labelStockType>
+</labelSpecification>
+<requestedPackageLineItems>
+<declaredValue>
+<amount>200</amount>
+<currency>USD</currency>
+</declaredValue>
+</requestedPackageLineItems>
+</requestedShipment>
+<accountNumber>
+<value>740561073</value>
+</accountNumber>
+</root>
+
+let $map := map:map()
+
+
+
+let $mapping :=
+  for $child in $xml/*
+  return
+    if (empty($child/*))
+    then map:put($map, local-name($child), string($child))
+    else map:put($map, local-name($child), local:mapObjects($child))
+
+let $finalMap := map:map()
+let $mapping := map:put($finalMap, local-name($xml), $map)
+
+return xdmp:to-json($finalMap)

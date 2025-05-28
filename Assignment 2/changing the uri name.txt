@@ -1,0 +1,16 @@
+xquery version "1.0-ml";
+
+let $oldUri := "/XML/Library/Book"
+(:creating a new uri:)
+let $newUri := "/UCBOS/Library/Book"
+
+let $document := fn:doc($oldUri)
+
+(:output string:)
+let $result := "The uri is changed from "||$oldUri||" to "||$newUri
+let $collections := xdmp:document-get-collections($oldUri)
+
+return (
+        xdmp:document-insert($newUri,$document, (), $collections),
+        xdmp:document-delete($oldUri),
+        $result)
