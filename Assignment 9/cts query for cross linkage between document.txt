@@ -1,0 +1,126 @@
+Assignment 9 
+
+===== for inserting document into the collection Author and Book ======
+
+
+xquery version "1.0-ml";
+
+for $i in 1 to 10
+let $data := <root><parent><author>author{$i}</author></parent></root>
+let $uri := "/test/author"||$i||".xml"
+return xdmp:document-insert($uri,$data,(),("Author"))
+
+
+for $i in 1 to 100
+let $random := xdmp:random(10)
+let $data := <root><parent><book>book{$i}</book><author>author{$random}</author></parent></root>
+let $uri := "/test/book"||$i||".xml"
+return xdmp:document-insert($uri,$data,(),("Book"))
+
+
+
+
+
+
+
+
+
+
+
+========= for inserting books into the Author document =======
+
+
+for $i in 1 to 10 
+      let $author := "author"||$i
+      let $data := (cts:search(fn:collection("Book"),cts:path-range-query("root/parent/author", "=", $author)))//book
+      let $newData := element Books {
+                       $data
+                     }
+      return xdmp:node-insert-after(fn:doc("/test/"||$author||".xml")/root/parent,$newData)
+
+ 
+
+
+
+
+
+
+===== cts query for extracting list of books by author (using xpath)=====
+
+let $author := "author5"
+return  (cts:search(fn:collection("Book"),cts:path-range-query("root/parent/author", "=", $author)))//book
+
+
+
+
+
+
+
+
+
+
+====== cts query for extracting author by book name ======
+
+
+let $book := "book73"
+return (cts:search(fn:collection("Author"),cts:path-range-query("root/Books/book", "=", $book)))//author
+
+
+
+
+
+
+
+======== using string functions for book ==================
+
+
+let $book := "book73"
+let $result-xml := cts:search(fn:collection("Author"),cts:path-range-query("root/Books/book", "=", $book))
+return element author{ fn:substring-before($result-xml, "book") }
+
+
+
+
+
+=========== using string functions for for author ========
+
+
+let $author := "author5"
+let $values :=  xs:string(cts:search(fn:collection("Book"),cts:path-range-query("root/parent/author", "=", $author)))
+return element Books { string-join(for $i in $values
+        return fn:substring-before($i, $author),", ")
+            }
+
+
+
+
+
+
+============ using cts-values  for author  ======
+
+let $book := "book73"
+return cts:values(
+
+  cts:path-reference("root/Books/book"),(),(),
+ 
+    cts:path-range-query("root/Books/book", "=", "book73")
+)
+
+
+
+
+
+============ using cts-values  for Books ======
+
+
+let $book := "book73"
+return cts:values(
+
+  cts:path-reference("root/parent/author"),(),(),
+ 
+    cts:path-range-query("root/parent/book", "=", $book)
+)
+
+
+
+ 
