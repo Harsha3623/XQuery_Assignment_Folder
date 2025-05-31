@@ -130,7 +130,7 @@ return cts:values(
 let $author := "author2"
 return cts:values(
 
-  (cts:path-reference("root/Books/book")),(),(),
+  (cts:path-reference("root/parent/book")),(),(),
   cts:and-query((
     cts:path-range-query("root/parent/author", "=", $author),
     cts:collection-query("Book")
