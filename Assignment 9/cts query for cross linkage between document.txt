@@ -98,12 +98,12 @@ return element Books { string-join(for $i in $values
 
 ============ using cts-values  for author  ======
 
-let $book := "book73"
+let $author := "author1"
 return cts:values(
 
   cts:path-reference("root/Books/book"),(),(),
  
-    cts:path-range-query("root/Books/book", "=", "book73")
+    cts:path-range-query("root/parent/author", "=", $author)
 )
 
 
@@ -123,4 +123,36 @@ return cts:values(
 
 
 
- 
+
+========== searching for books list within a particular "Book" collection =======
+
+
+let $author := "author2"
+return cts:values(
+
+  (cts:path-reference("root/Books/book")),(),(),
+  cts:and-query((
+    cts:path-range-query("root/parent/author", "=", $author),
+    cts:collection-query("Book")
+  ))
+)
+
+
+
+========== searching for author name within a particular "Author" collection =======
+
+
+let $book := "book73"
+return cts:values(
+
+  cts:path-reference("root/parent/author"),(),(),
+   cts:and-query(( 
+    cts:path-range-query("root/Books/book", "=", $book),
+	 cts:collection-query("Author")
+  ))
+
+)
+
+
+
+
