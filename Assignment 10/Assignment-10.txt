@@ -1,0 +1,157 @@
+xquery version "1.0-ml";
+
+(:
+
+*  *  * 
+*  * 
+* 
+:)
+let $lines := 3
+
+return string-join((for $i in 0 to $lines
+          return string-join((for $j in 1 to $lines - $i
+          return "* ")," ")),"&#10;")
+ 
+
+==============================
+(:
+
+        * 
+      * * 
+    * * * 
+  * * * * 
+* * * * * 
+:)
+
+
+let $lines := 5
+return string-join((for $i in 1 to $lines
+          return let $space := string-join((for $j in 1 to $lines - $i 
+                                return "  "),"")
+                 let $star := string-join((for $j in 1 to $i 
+                               return "* "),"")
+                 return concat($space,$star)),"&#10;")
+                
+
+
+
+==========================
+
+
+(:getting the data by level:)
+declare function local:getListDetails($dept, $name, $data,$level) {
+   let $initial := element path {
+    $dept || " > " || $name
+    }
+   
+  return if($level eq 6)  then ""
+  else ($initial, 
+        $data/* ! local:getListDetails($dept,concat($name," > ", ./@name), .,$level + 1))
+
+};
+
+let $doc := <department id="D01" name="R/D">
+        <jhg id="E001" name="Alice" title="CTO"/>
+
+        <employees id="E002" name="Bob" title="Tech Lead">
+          <employee id="E003" name="Charlie" title="Senior Engineer">
+            <employee id="E004" name="David" title="Engineer"/>
+            <employee id="E005" name="Ella" title="Engineer"/>
+          </employee>
+          <employee id="E006" name="Fiona" title="Engineer"/>
+        </employees>
+
+        <employee id="E007" name="George" title="QA Lead">
+          <employee id="E008" name="Hannah" title="QA Engineer"/>
+          <employee id="E009" name="Ian" title="QA Engineer">
+            <employee id="E010" name="Jasmine" title="QA Intern"/>
+          </employee>
+        </employee>
+
+        <employee id="E011" name="Kevin" title="DevOps Lead">
+          <employee id="E012" name="Liam" title="DevOps Engineer"/>
+          <employee id="E013" name="Mia" title="DevOps Engineer"/>
+        </employee>
+
+        <employee id="E016" name="Riya" title="AIML Lead">
+          <employee id="E017" name="Sam" title="AI Engineer"/>
+         
+          <employee id="E018" name="Tina" title="ML Engineer"/>
+        </employee>
+
+        <employee id="E015" name="Olivia" title="Systems Engineer"/>
+      </department>
+      
+      
+let $dept := $doc/@name
+
+let $dataSet := $doc/*
+
+return element paths {for $data in $dataSet
+         return local:getListDetails($dept, $data/@name, $data, 1)}
+
+
+
+========================
+
+(:Write a dynamic XQuery that lists all employees in a department as paths showing who reports to whom, starting with the department name:)
+xquery version "1.0-ml";
+
+
+
+
+declare function local:getListOfDetails($dept, $name, $data){
+  
+  let $initial := element path { $dept||" &gt; "||$name }
+  return if(fn:count($data/*) eq 0 )
+                  then $initial
+            else ($initial,
+            
+            $data/*  ! ( local:getListOfDetails($dept,concat($name," > ", ./@name), .))
+            
+            )
+};
+
+
+
+let $doc := <department id="D01" name="R/D">
+        <jhg id="E001" name="Alice" title="CTO"/>
+
+        <employees id="E002" name="Bob" title="Tech Lead">
+          <employee id="E003" name="Charlie" title="Senior Engineer">
+            <employee id="E004" name="David" title="Engineer"/>
+            <employee id="E005" name="Ella" title="Engineer"/>
+          </employee>
+          <employee id="E006" name="Fiona" title="Engineer"/>
+        </employees>
+
+        <employee id="E007" name="George" title="QA Lead">
+          <employee id="E008" name="Hannah" title="QA Engineer"/>
+          <employee id="E009" name="Ian" title="QA Engineer">
+            <employee id="E010" name="Jasmine" title="QA Intern"/>
+          </employee>
+        </employee>
+
+        <employee id="E011" name="Kevin" title="DevOps Lead">
+          <employee id="E012" name="Liam" title="DevOps Engineer"/>
+          <employee id="E013" name="Mia" title="DevOps Engineer"/>
+        </employee>
+
+        <employee id="E016" name="Riya" title="AIML Lead">
+          <employee id="E017" name="Sam" title="AI Engineer"/>
+         
+          <employee id="E018" name="Tina" title="ML Engineer"/>
+        </employee>
+
+        <employee id="E015" name="Olivia" title="Systems Engineer"/>
+      </department>
+      
+let $dept := $doc/@name
+return element paths {
+              for $dataSets in $doc/*
+                   for $data in $dataSets
+                     return local:getListOfDetails($dept, $data/@name, $data)
+                    }
+                    
+                    
+ 
