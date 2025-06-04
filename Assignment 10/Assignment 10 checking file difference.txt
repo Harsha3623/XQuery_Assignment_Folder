@@ -1,0 +1,131 @@
+xquery version "1.0-ml";
+
+
+declare function local:verifyData($data1, $data2) {
+
+
+
+     if($data1/text() ne $data2/text()) then 
+                       if(local-name($data1) eq local-name($data2)) 
+                             then '<changed path="'||xdmp:path($data2)||'" from="'||$data1/text()||'" to="'||$data2/text()||'"/>'
+                       else '<removed path="'||xdmp:path($data1)||'" Value="'||$data1/text()||'"/>'||"&#10;"||
+                              '<added path="'||xdmp:path($data2)||'" Value="'||$data2/text()||'"/>'
+      else (
+           if(local-name($data1) ne local-name($data2)) 
+                 then '<changed path from="'||xdmp:path($data1)||'" to="'||xdmp:path($data2)||'" Value="'||$data1/text()||'"/>'
+           else if(local-name($data1) eq local-name($data2)) then ()
+           
+           else '<removed path="'||xdmp:path($data1)||'" Value="'||$data1/text()||'"/>'
+        )
+
+    
+    
+};
+
+
+declare function local:writeAddedValues($data){
+
+     ( 1 to fn:count($data)) ! ( if(fn:count($data[.]/*) eq 0) 
+                                      then '<added path="'||xdmp:path($data[.])||'" Value="'||$data[.]/text()||'"/>'
+                                  else  (local:writeAddedValues($data/*)))
+                  
+};
+
+declare function local:checkDifference($data1, $data2) {
+  
+  let $change := for $i in 1 to fn:count($data1)
+                  return if(fn:count($data1[$i]/*) ne 0) 
+                           then  if (local-name($data1[$i]) ne local-name($data2[$i])) 
+                                       then concat(('<removed element="'||local-name($data1[$i])||'" attribute ="'||$data1[$i]/@*||'"/>'),"&#10;",string-join((local:writeAddedValues($data2[$i])),"&#10;"))
+                                   else local:checkDifference($data1[$i]/*,$data2[$i]/*)
+                         else local:verifyData($data1[$i],$data2[$i])
+    let $added := (for $i in fn:count($data1) + 1  to fn:count($data2)
+                              return local:writeAddedValues($data2[$i]))
+
+      return ($change,$added)
+};
+
+let $doc1 := <library>
+                <section name="Programming">
+                  <book id="b1">
+                    <title>XQuery for Beginners</title>
+                    <author>
+                      <name>John Doe</name>
+                      <birth-year>1975</birth-year>
+                     
+                    </author>
+                    <price currency="USD">29.99</price>
+                    <chapters>
+                      <chapter>Introduction</chapter>
+                      <chapter>FLWOR Expressions</chapter>
+                      <chapter>Functions</chapter>
+                    </chapters>
+                  </book>
+                  <book id="b2">
+                    <title>Learning XML</title>
+                    <author>
+                      <name>Mary Anne</name>
+                      
+                    </author>
+                    <price currency="USD">19.99</price>
+                  </book>
+                </section>
+                <section name="Databases">
+                  <book id="b3">
+                    <title>SQL Deep Dive</title>
+                    <author>
+                      <name>Jane Roe</name>
+                    </author>
+                    <price currency="EUR">39.95</price>
+                  </book>
+                </section>
+                <section name="abc">
+                  <book id="b3">
+                    <title>SQL Deep Dive</title>
+                    <author>
+                      <name>Jane Roe</name>
+                    </author>
+                    <price currency="EUR">39.95</price>
+                  </book>
+                </section>
+              </library>
+
+let $doc2 := <library>
+              <section name="Programming">
+                <book id="b1">
+                  <titles>XQuery for Beginners - 2nd Edition</titles>
+                  <author>
+                    <name>John Doe</name>
+                    <birth-year>1975</birth-year>
+                    <hello>Hello</hello>
+                    <nationality>US</nationality>
+                  </author>
+                  <price currency="USD">34.99</price>
+                  <chapters>
+                    <chapter>Introduction</chapter>
+                    <chapter>FLWOR Expressions</chapter>
+                    <chapter>XPath</chapter>
+                    <chapter>XQuery Update</chapter>
+                  </chapters>
+                </book>
+                <book id="b2">
+                  <title>Learning XML</title>
+                  <author>
+                    <name>Mary Anne</name>
+                    <nationality>UK</nationality>
+                  </author>
+                  <price currency="USD">19.99</price>
+                </book>
+                <book id="b4">
+                  <title>Mastering JSON</title>
+                  <author>
+                    <name>Daniel Craig</name>
+                  </author>
+                  <price currency="USD">22.50</price>
+                </book>
+              </section>
+              <!-- Databases section removed -->
+            </library>
+
+let $data := "<diff>&#10;"||string-join((local:checkDifference($doc1,$doc2)),"&#10;")||"</diff>"
+return $data
