@@ -1,0 +1,63 @@
+xquery version "1.0-ml";
+
+declare function local:evaluateExpression($data) {
+      if(fn:count($data/*) ne 0  ) 
+            then (
+              let $values := for $i in 1 to  fn:count($data/*)
+                                return local:evaluateExpression($data/*[$i])
+              let $op := if($data/@* eq "/") then " div " else  $data/@*
+             
+              return concat("(", string-join($values,$op),")")
+            )
+      else $data/text()
+
+};
+
+
+let $data1 := 
+<expr op="+">
+	<value>3</value>
+			<expr op="*">
+				<value>2</value>
+					<expr op="-">
+						<expr op="+">
+							<value>8</value>
+							<expr op="/">
+							<value>12</value>
+							<value>4</value>
+						</expr>
+					</expr>
+				<value>5</value>
+			</expr>
+		<expr op="+">
+			<value>1</value>
+				<expr op="*">
+					<value>2</value>
+						<expr op="-">
+							<value>9</value>
+							<expr op="+">
+								<value>3</value>
+								<value>1</value>
+							</expr>
+						</expr>
+				</expr>
+			</expr>
+	</expr>
+</expr>
+
+
+let $data2 := 
+<expr op="+">
+  <value>2</value>
+  <expr op="/">
+    <value>10</value>
+    <value>2</value>
+      <expr op="/">
+    <value>10</value>
+    <value>2</value>
+  </expr>
+  </expr>
+</expr>
+
+return xdmp:eval(local:evaluateExpression($data1))
+
