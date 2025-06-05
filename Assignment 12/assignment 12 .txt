@@ -1,0 +1,221 @@
+(:
+
+Create documents in one main collection. Create documents in 3 sub collections which are crosslinked to the main collection. Use CTS functions to retrieve data from the sub collections, perform join according to the datatype and update the elements in main collection.
+:)
+
+
+
+
+========== main author collection document insertion =========
+let $uri := "cts/test/author"
+
+let $document := (1 to 10) ! element root {
+                    element parent {
+                      element name {
+                       "author"||(.)
+                      }
+                    }
+                  }
+
+return for $i in 1 to 10
+        return (xdmp:document-insert("cts/test/author"|| $i ||".xml", $document[ $i ] , (),("cts-author")))
+        
+        
+fn:collection("cts-author")
+
+
+
+===============book price year subcollection document insertion =============
+
+
+let $document := (1 to 50) ! element root {
+                        element parent{
+                            element book{
+                                  element name {
+                                      "book"||(.)
+                                    },
+                                   element author {
+                                   "author"||(xdmp:random(9) + 1)
+                                   }
+                            }
+                        }
+                    }
+return for $i in 1 to 50
+            return (xdmp:document-insert("cts/test/book"|| $i ||".xml", $document[ $i ] , (),("cts-books")))
+ 
+
+---------
+
+let $document := (1 to 50) ! element root {
+                        element parent{
+                            
+                                  element price {
+                                      xdmp:random(1000) + 1
+                                    },
+                                   element book {
+                                   "book"||( .)
+                                   }
+                            
+                        }
+                    }
+
+return for $i in 1 to 50
+            return (xdmp:document-insert("cts/test/price"|| $i ||".xml", $document[ $i ] , (),("cts-price")))
+ 
+---------
+
+
+let $document := (1 to 50) ! element root {
+                        element parent{
+                            
+                                  element year {
+                                      xdmp:random(50) + 1960
+                                    },
+                                   element book {
+                                   "book"||( . )
+                                   }
+                            
+                        }
+                    }
+
+return for $i in 1 to 50
+            return (xdmp:document-insert("cts/test/year"|| $i ||".xml", $document[ $i ] , (),("cts-year")))
+ 
+
+
+
+================book-price-year with saving to main collection using cts query ====================
+
+
+for $i in cts:uris((), (), cts:collection-query("cts-author"))
+let $authorName := cts:values(cts:path-reference("root/parent/name"),(),(),
+                          cts:document-query($i))
+
+let $books := cts:values(cts:path-reference("root/parent/book/name"), (), (),
+                                          cts:and-query((cts:collection-query("cts-books"),
+                                                          cts:path-range-query("root/parent/book/author", "=", $authorName))))
+let $updated  := for $book in $books
+                  let $price := cts:values(cts:path-reference("root/parent/price"), (), (),
+                                                cts:and-query((cts:collection-query("cts-price"),
+                                                                cts:path-range-query("root/parent/book", "=", $book))))
+                                                                
+                  let $year := cts:values(cts:path-reference("root/parent/year"), (), (),
+                                                cts:and-query((cts:collection-query("cts-year"),
+                                                                cts:path-range-query("root/parent/book", "=", $book))))
+                  return (element book {
+                            <name> {$book}</name>,
+                            <price> {$price} </price>,
+                            <year> {$year} </year>
+                            })
+                            
+return xdmp:node-insert-after(
+                            cts:search (fn:collection("cts-author"),cts:document-query($i))/root/parent/name , 
+                            
+                              (element books {
+                                      $updated
+                                }))
+
+  
+
+
+
+
+================book-price-year without saving to main collection ====================
+
+
+
+
+for $author in fn:collection("cts-author")
+let $authorName := data($author/root/parent/name)
+let $books := cts:values(cts:path-reference("root/parent/book/name"), (), (),
+                                          cts:and-query((cts:collection-query("cts-books"),
+                                                          cts:path-range-query("root/parent/book/author", "=", $authorName))))
+let $updated  := for $book in $books
+                  let $price := cts:values(cts:path-reference("root/parent/price"), (), (),
+                                                cts:and-query((cts:collection-query("cts-price"),
+                                                                cts:path-range-query("root/parent/book", "=", $book))))
+                                                                
+                  let $year := cts:values(cts:path-reference("root/parent/year"), (), (),
+                                                cts:and-query((cts:collection-query("cts-year"),
+                                                                cts:path-range-query("root/parent/book", "=", $book))))
+                  return (element book {
+                            <name> {$book}</name>,
+                            <price> {$price} </price>,
+                            <year> {$year} </year>
+                            })
+return ($authorName, (element books {
+            
+            $updated
+              }))
+
+  
+  
+  
+
+
+================book-price-year with saving to main collection ====================
+
+for $author in fn:collection("cts-author")
+let $authorName := data($author/root/parent/name)
+let $books := cts:values(cts:path-reference("root/parent/book/name"), (), (),
+                                          cts:and-query((cts:collection-query("cts-books"),
+                                                          cts:path-range-query("root/parent/book/author", "=", $authorName))))
+let $updated  := for $book in $books
+                  let $price := cts:values(cts:path-reference("root/parent/price"), (), (),
+                                                cts:and-query((cts:collection-query("cts-price"),
+                                                                cts:path-range-query("root/parent/book", "=", $book))))
+                                                                
+                  let $year := cts:values(cts:path-reference("root/parent/year"), (), (),
+                                                cts:and-query((cts:collection-query("cts-year"),
+                                                                cts:path-range-query("root/parent/book", "=", $book))))
+                  return (element book {
+                            <name> {$book}</name>,
+                            <price> {$price} </price>,
+                            <year> {$year} </year>
+                            })
+return xdmp:node-insert-after($author/root/parent/name, (element books {
+            
+            $updated
+              }))
+
+
+
+
+
+
+
+===============pattern - The columns should be properly aligned to the last line numbers ====================
+
+(:
+
+1 
+2  3 
+4  5  6 
+7  8  9  10
+11 12 13 14 15
+16 17 18 19 20 21
+22 23 24 25 26 27 28
+29 30 31 32 33 34 35 36
+37 38 39 40 41 42 43 44 45
+46 47 48 49 50 51 52 53 54 55
+
+:)
+
+declare function local:addPaddingSpace($str, $length) {
+        substring(  ($str || string-join(((1 to $length) ! (' ')))),
+                              1 ,   $length)
+};
+
+
+
+let $lines := 10
+let $padding  := count(tokenize(xs:string(sum(1 to $lines)),"\d"))
+
+return string-join((for $i in 1 to $lines
+        let $sum  := sum(1 to $i - 1)
+        return  string-join((for $j in 1 to $i
+                return local:addPaddingSpace(($sum + $j),$padding - 1))," ")),"&#10;")
+
+
+
+  
