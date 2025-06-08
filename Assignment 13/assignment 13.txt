@@ -1,0 +1,94 @@
+
+
+Identify any service that had more than 3 consecutive "error" or "fail" events within a 10-minute window.
+Return a list of such services and their associated failure sequences (with timestamps).
+Also, output a summary with:
+Total events processed
+Total error/fail events
+Services with highest error rates
+
+
+xquery version "1.0-ml";
+
+
+declare function local:getListData($date, $service) {
+     let $data  := cts:search(fn:doc("log/test/data.xml")/log/*, cts:and-query((
+                                                              
+                                                                        cts:path-range-query("log/event/timestamp", "<=",( $date + xs:dayTimeDuration("PT10M"))),
+                                                                        cts:path-range-query("log/event/timestamp", ">=", $date),
+                                                                        cts:path-range-query("log/event/service", "=" ,$service),
+                                                                        
+                                                                        cts:or-query((
+                                                                                       cts:path-range-query("log/event/status","=","fail"),
+                                                                                        cts:path-range-query("log/event/status","=","error") 
+                                                                                        ))
+                                                                             
+                                                              )))
+        return element service {
+                          attribute name {$service},
+                          element sequence {
+                                              for $i in $data
+                                              return element event {
+                                                            attribute time {data($i/timestamp)},
+                                                            attribute status {data($i/status)}
+                                                      }
+                                            }
+                        }
+};
+
+
+let $errorData  :=  for $i in fn:doc("log/test/data.xml")/log/*[status != "ok"]
+                    let $date := data($i/timestamp)
+                    let $service := data($i/service)
+                    return  let $data  := local:getListData($date, $service)
+                            return if(count($data//event) ge 3) then (element root {$data})
+                                        else ()
+                              
+                              
+let $totalError := fn:count(doc("log/test/data.xml")/log/event[status ne  "ok"])
+
+let $max :=  max(for $i in fn:distinct-values(fn:doc("log/test/data.xml")/log/event/service)
+                  return  fn:count(doc("log/test/data.xml")/log/event[status != "ok" and service = $i]))
+
+let $service := for $i in fn:distinct-values(fn:doc('log/test/data.xml')/log/event/service)
+                  return (if(count(doc("log/test/data.xml")/log/event[service eq $i]) eq $max) then $i else ())
+                  
+
+
+
+return <anomalies>
+          <summary>
+            <total-events>{fn:count(fn:doc("log/test/data.xml")//event)}</total-events>
+            <total-errors>{$totalError}</total-errors>
+            <top-error-service>{$service}</top-error-service>
+          </summary>
+          {$errorData}
+        </anomalies>
+		
+		
+		
+		
+
+------------pattern
+
+
+(:
+    *
+   * *
+  * * *
+ * * * *
+* * * * *
+
+:)
+let $lines := 15
+return string-join((for $i in 1 to $lines
+                    return let $space  := string-join((for $j in $i to $lines - 1
+                                                         return ' '),"")
+                           let $star := string-join((
+                                          for $j in 1 to $i
+                                            return "*"
+                                         )," ")
+                            return concat($space,$star)),
+                   "&#10;")
+
+
