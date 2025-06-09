@@ -1,0 +1,46 @@
+
+------using fn:replace()------------
+
+xquery version "1.0-ml";
+
+
+declare namespace functx = "http://www.functx.com";
+declare function functx:chars ( $arg ) {
+
+   for $ch in fn:string-to-codepoints($arg)
+     return if(fn:matches(fn:codepoints-to-string($ch),'[.\\?*|\^\${}()\[\]+]')) 
+                         then concat("\",fn:codepoints-to-string($ch))
+              else fn:codepoints-to-string($ch)
+};
+
+
+let $inputString := "JAVA+?^$|[]|,{}\/\/,=. 1[]JAVA+?^$|(){}|\-+XQUERYJAVA+?^$|"
+
+let $pattern :=  "JAVA+?^$|"
+
+let $replacement := "PYTHON"
+
+return fn:replace($inputString,string-join(functx:chars($pattern)),$replacement)
+
+
+
+----------using-substring()-------------
+
+
+xquery version "1.0-ml";
+
+declare function local:replaceString($inputString, $pattern, $replacement) { 
+
+  if(fn:not(fn:contains($inputString,$pattern))) then $inputString
+  else 
+       concat(fn:substring-before($inputString, $pattern) , $replacement , 
+                    local:replaceString(fn:substring-after($inputString, $pattern),$pattern,$replacement))
+    
+};
+let $inputString := "JAVA+?^$[](){}|\-+JAVA+?^$JAVA+?^$[](){}|\-+XQUERYJAVA+?^$"
+
+let $pattern  :=  "JAVA+?^$[](){}|\-"
+
+let $replacement := "PYTHON"
+
+return  local:replaceString($inputString,$pattern,$replacement)
