@@ -92,3 +92,40 @@ return string-join((for $i in 1 to $lines
                    "&#10;")
 
 
+
+---------------------
+(:
+    1 
+   1 1
+  1 2 1
+ 1 2 2 1
+1 2 3 2 1
+:)
+
+
+xquery version "1.0-ml";
+
+let $number := 3
+return string-join(
+        
+        for $i in 1 to $number  
+        return  
+                let $firstSpace := string-join(for $j in $i to ($number * 2) - $i - 1
+                                                  return " ","")
+                let $secondSpace := string-join(for $j in $i to ($number * 2) - $i - 2
+                                                  return " ","")
+                                                  
+                let $firstLine := let $first := string-join(for $j in 1 to $i
+                                                    return xs:string($j)," ")
+                                   let $rev := string-join(for $j in 1 to $i - 1
+                                                     return xs:string($i - $j)," ")
+                                   return concat($first," ",$rev)
+                let $lastLine := concat( string-join(for $j in 1 to $i
+                                             return xs:string($j)," ")," ",
+                                          string-join(for $j in 0 to $i - 1
+                                              return xs:string($i - $j)," "))
+                 return if($i eq $number) then $firstLine
+                           else concat($firstSpace,$firstLine,"&#10;",$secondSpace,$lastLine)
+                           
+                  ,"&#10;")
+
