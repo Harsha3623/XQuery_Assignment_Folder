@@ -1,0 +1,262 @@
+
+Create 50 documents(should have at least 5 elements under root element) in collection1 and 1000 documents(10 elements) in collection2 
+which are crosslinked. Write a query to update an element for random no. of docs in collection1, check 
+if the value is updated in that document and then update the value for an element in crosslinked docs in collection2. Use transactions.
+
+
+(:inserting the 50 author  in Author collection:)
+xquery version "1.0-ml";
+
+for $i in 41 to 50
+let $data :=  element root {
+                          element author {
+                          
+                              "author"||$i
+                              },
+                           element location {
+                             "location " ||xdmp:random(99) + 1 
+                           },for $i in 1 to 9 return element {"element"||$i} { xdmp:random(100)}
+                          }
+let $uri := "test/assignment/author"||$i||".xml"
+return xdmp:document-insert($uri,$data,(),("Author"))
+
+fn:collection("Author")
+
+
+
+(:inserting books to Books collection:)
+
+xquery version "1.0-ml";
+
+for $i in 1 to 10000
+let $data :=  element root {
+                         
+                           element book {
+                             "book"||$i
+                           },
+                            element author {
+                              "author"||(xdmp:random(49) + 1)
+                              },
+                              
+                               for $i in 1 to 10 return element {"element"||$i} {xdmp:random(100)}
+                          }
+
+let $uri := "test/assignment/book"||$i||".xml"
+return xdmp:document-insert($uri,$data,(),("Books"))
+
+
+
+
+(:Adding the path-range indexes :)
+
+xquery version "1.0-ml";
+fn:count(fn:collection("Books")/root[author eq "author1"])
+
+
+
+
+admin:database-range-path-index($database-id, $scalar-type, $pathexpr, $collation, $range-value-positions, $invalid-values)
+
+
+
+  xquery version "1.0-ml";
+
+  import module namespace admin = "http://marklogic.com/xdmp/admin"
+      at "/MarkLogic/admin.xqy";
+
+  let $path-spec := admin:database-range-path-index(
+                                    xdmp:database('myNewDatabase'),
+                                    "string",
+                                    "root/name",
+                                    "http://marklogic.com/collation/",
+                                    fn:false(),
+                                    "ignore"
+                                    )
+  
+return admin:save-configuration(admin:database-add-range-path-index(admin:get-configuration(), xdmp:database('myNewDatabase'), $path-spec))
+
+
+
+
+fn:collection("Books")
+
+xquery version "1.0-ml";
+
+import module namespace admin = "http://marklogic.com/xdmp/admin"
+    at "/MarkLogic/admin.xqy";
+
+let $path-spec := admin:database-range-path-index(
+                                    xdmp:database('myNewDatabase'),
+                                    "string",
+                                    "root/author",
+                                    "http://marklogic.com/collation/",
+                                    fn:false(),
+                                    "ignore"
+                                    )
+  
+return admin:save-configuration(admin:database-add-range-path-index(admin:get-configuration(), xdmp:database('myNewDatabase'), $path-spec))
+
+
+xquery version "1.0-ml";
+
+import module namespace admin = "http://marklogic.com/xdmp/admin"
+    at "/MarkLogic/admin.xqy";
+
+let $path-spec := admin:database-range-path-index(
+                                    xdmp:database('myNewDatabase'),
+                                    "string",
+                                    "root/book",
+                                    "http://marklogic.com/collation/",
+                                    fn:false(),
+                                    "ignore"
+                                    )
+  
+return admin:save-configuration(admin:database-add-range-path-index(admin:get-configuration(), xdmp:database('myNewDatabase'), $path-spec))
+
+
+
+
+
+xquery version "1.0-ml";
+
+import module namespace admin = "http://marklogic.com/xdmp/admin"
+    at "/MarkLogic/admin.xqy";
+
+let $path-spec := admin:database-range-path-index(
+                                    xdmp:database('myNewDatabase'),
+                                    "string",
+                                    "root/location",
+                                    "http://marklogic.com/collation/",
+                                    fn:false(),
+                                    "ignore"
+                                    )
+  
+return admin:save-configuration(admin:database-add-range-path-index(admin:get-configuration(), xdmp:database('myNewDatabase'), $path-spec))
+
+
+
+
+
+
+(:updating the location in author collection for random docs and also replacing the element which is presnet in books element with location value
+where the elemenet position is total element which the author have:)
+
+xquery version "1.0-ml";
+
+let $seq := distinct-values((1 to 3) ! (xdmp:random(49) + 1))
+
+return for $i in 1 to fn:count($seq)
+          return  let $authorName := "author"||$seq[$i]
+                  let $location := "location "||xdmp:random(10) + 1
+                  
+                  let $current-location := cts:values(
+                                                      cts:path-reference('root/location'), (), (),
+                                                          cts:and-query((
+                                                                          cts:collection-query("Author"),
+                                                                          cts:path-range-query("root/author", "=", $authorName)))
+                                                      )
+                  let $update := if($current-location ne $location)
+                                            then (
+                                            let $author := xdmp:eval(
+                                                                      'xdmp:node-replace((
+                                                                               fn:collection("Author")/root[author eq "'|| $authorName ||'"])//location, 
+                                                                                    element location {"'|| $location||'"})'
+                                                                       ,(),
+                                                                       <options xmlns="xdmp:eval">
+                                  
+                                                                           <update>true</update>
+                                                                           <commit>auto</commit>
+
+                                                                      </options>)
+                                                                      
+                                            let $author  := xdmp:eval('(fn:collection("Author")/root[author eq "'||$authorName||'"])')
+                                            
+                                           
+
+                                            let $books := for $uri in cts:uris((), (), 
+                                                                                    cts:and-query((
+                                                                                          cts:collection-query("Books"),
+                                                                                            cts:path-range-query('root/author', "=", $authorName))))
+                                            
+                                                          return let $count := fn:count($author/*)
+                                                                  let $bookData := fn:doc($uri)
+                                                                  let $nodeName := local-name($bookData//*[$count])
+                                                                  return (xdmp:node-replace($bookData//*[$count],element {$nodeName}{$location}),
+                                                                            $uri||" Updated the data in "||$count - 2 ||" position.")
+                                                                                            
+                                              return ("updated the author = "||$authorName||" with "||$location,string-join($books,"&#10;"))
+                                            )
+                                            
+                                  else ($authorName||" locaction is same as "||$location)
+
+                  return ($update)
+
+
+
+
+
+
+(:updating all the elements from author to books and inserting the elements if the element is present in author and not present in the book:)
+
+xquery version "1.0-ml";
+
+let $seq := distinct-values((1) ! (xdmp:random(49) + 1))
+
+return for $i in 1 to fn:count($seq)
+          return  let $authorName := "author"||$seq[$i]
+                  let $location := "location "||xdmp:random(10) + 1
+                  
+                  let $current-location := cts:values(
+                                                      cts:path-reference('root/location'), (), (),
+                                                          cts:and-query((
+                                                                          cts:collection-query("Author"),
+                                                                          cts:path-range-query("root/author", "=", $authorName)))
+                                                      )
+                  let $update := if($current-location ne $location)
+                                            then (
+                                            let $author := xdmp:eval(
+                                                                      'xdmp:node-replace((fn:collection("Author")/root[author eq "'|| $authorName ||'"])//location,
+																				element location {"'|| $location||'"})'
+                                                                       ,(),
+                                                                       <options xmlns="xdmp:eval">
+                                  
+                                                                           <update>true</update>
+                                                                           <commit>auto</commit>
+
+                                                                      </options>)
+                                                                      
+                                            let $author  := xdmp:eval('(fn:collection("Author")/root[author eq "'||$authorName||'"])')
+                                            
+                                           
+
+                                            let $books := for $uri in cts:uris((), (),
+																					cts:and-query((
+																								cts:collection-query("Books"),
+																								cts:path-range-query('root/author', "=", $authorName))))
+                                            
+                                                          return ("Updating the Book with uri = "||$uri||"&#10;",
+																		(for $data in  $author/*[local-name(.) ne "author"]
+																		  let $element-name := local-name($data)
+																		  let $elemenet-data := data($data)
+																		  
+																		   return if(exists(fn:doc($uri)//*[local-name(.) eq $element-name]) 
+																					 and data(fn:doc($uri)//*[local-name(.) eq $element-name]) ne $elemenet-data) 
+																						   then (xdmp:node-replace(fn:doc($uri)//*[local-name(.) eq $element-name], $data),
+																								   "replaced the "||$element-name||" with "||$data/text())
+																								   
+																				   else if (exists(fn:doc($uri)//*[local-name(.) eq $element-name]) 
+																							 and data(fn:doc($uri)//*[local-name(.) eq $element-name]) eq $elemenet-data)
+																							   then ("element := "||$element-name||" have same value "||$elemenet-data)
+																							   
+																					else ((xdmp:node-insert-child(fn:doc($uri)/root, $data),
+																									"Inserted the new element "||$elemenet-data)))
+																											,"&#10;")
+                                                                                            
+                                              return ("updated the author = "||$authorName||" with "||$location,string-join($books,"&#10;"))
+                                            )
+                                            
+                                  else ($authorName||" locaction is same as "||$location)
+
+                  return ($update)
+
+
