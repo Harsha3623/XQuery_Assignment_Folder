@@ -1,0 +1,110 @@
+xquery version "1.0-ml";
+
+
+declare namespace functx = "http://www.functx.com";
+
+declare function functx:sort( $seq ) {
+
+   for $item in $seq
+   order by $item
+   return $item
+};
+
+
+declare function local:getRemainingData($data,$val)  {
+  for $i in $data 
+    return if(fn:deep-equal($i,$val)) then ()
+            else $i
+};
+
+
+
+declare function local:getRoutes($start,$end, $data,$path,$weight) {
+  if($start eq $end ) then element path { attribute nodes {concat($path," -> ",$start)}, attribute weight {$weight}}
+  
+  else 
+
+         let $values := $data[@from eq $start]
+
+         let $paths  := for $val in $values
+                         return (local:getRoutes($val/@to/string(),
+                                                 $end,
+                                                   local:getRemainingData($data,$val),
+                                                       concat($path," -> ",$val/@from/string()),
+                                           ($weight + xs:integer($val/@weight/string()))))
+        
+        return $paths
+};
+
+declare function local:getCycle($start, $end, $data, $path) {
+
+   if($start eq $end ) then concat($path," ",$start)
+
+  else 
+         let $values := $data[@from eq $start]
+
+         let $paths  := for $val in $values
+                         return (local:getCycle($val/@to/string(),
+                                                 $end,
+                                                   local:getRemainingData($data,$val),
+                                                       concat($path," ",$val/@from/string())))
+                                           
+         return   $paths
+};
+
+
+
+let $data := <graph>
+                <edge from="A" to="B" weight="2"/>
+                <edge from="B" to="C" weight="3"/>
+                <edge from="A" to="C" weight="5"/>
+                <edge from="C" to="A" weight="1"/>
+                <edge from="C" to="D" weight="4"/>
+                <edge from="D" to="B" weight="1"/>
+              </graph>
+              
+let $start := 'A'
+let $end := 'A'
+
+let $path :=  for $val in $data/*[@from eq $start]
+              return  (local:getRoutes($val/@to/string(),$end,local:getRemainingData($data/*,$val),$start,xs:integer($val/@weight/string())))
+
+
+let $path := element paths {
+                    for $i in $path
+                    order by xs:integer($i/@weight)
+                    return $i
+                    }
+                    
+
+let $cycles  :=  for $i in $data/*
+                          return local:getCycle($i/@to/string(),
+                                      $i/@from/string(),
+                                        local:getRemainingData($data/*,$i),
+                                        $i/@from/string())
+
+let $map := map:map()
+
+let $mapping := for $val in $cycles
+                let $len := fn:string-length($val)                      
+                return let $key := string-join(
+                                                xs:string(
+                                                          functx:sort(fn:string-to-codepoints(fn:substring($val,1,$len - 1))))," ")
+
+                        return (map:put($map,$key,concat(map:get($map,$key),"(",$val,")")))
+
+                                
+
+let $cycle := element cycles {for $key in map:keys($map)
+
+              return let $value := fn:replace(map:get($map,$key)," "," -> ")
+              
+                      return  element cycle {attribute nodes {$value}}
+                               }
+
+return element results {
+        $path,$cycle
+}
+
+
+
