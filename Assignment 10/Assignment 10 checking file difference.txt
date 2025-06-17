@@ -25,8 +25,9 @@ declare function local:verifyData($data1, $data2) {
 
 declare function local:writeAddedValues($data){
 
-     ( 1 to fn:count($data)) ! ( if(fn:count($data[.]/*) eq 0) 
-                                      then '<added path="'||xdmp:path($data[.])||'" Value="'||$data[.]/text()||'"/>'
+     for $i in 1 to fn:count($data)
+     return ( if(fn:count($data[$i]/*) eq 0) 
+                                      then '<added path="'||xdmp:path($data[$i])||'" Value="'||$data[$i]/text()||'"/>'
                                   else  (local:writeAddedValues($data/*)))
                   
 };
@@ -36,7 +37,7 @@ declare function local:checkDifference($data1, $data2) {
   let $change := for $i in 1 to fn:count($data1)
                   return if(fn:count($data1[$i]/*) ne 0) 
                            then  if (local-name($data1[$i]) ne local-name($data2[$i])) 
-                                       then concat(('<removed element="'||local-name($data1[$i])||'" attribute ="'||$data1[$i]/@*||'"/>'),"&#10;",string-join((local:writeAddedValues($data2[$i])),"&#10;"))
+                                       then concat(('<removed element="'||local-name($data1[$i])||'" attribute ="'||$data1[$i]/@*||'"/>'),"&#10;")
                                    else local:checkDifference($data1[$i]/*,$data2[$i]/*)
                          else local:verifyData($data1[$i],$data2[$i])
     let $added := (for $i in fn:count($data1) + 1  to fn:count($data2)
@@ -129,3 +130,4 @@ let $doc2 := <library>
 
 let $data := "<diff>&#10;"||string-join((local:checkDifference($doc1,$doc2)),"&#10;")||"</diff>"
 return $data
+

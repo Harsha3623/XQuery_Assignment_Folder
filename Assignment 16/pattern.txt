@@ -1,0 +1,68 @@
+
+(:
+
+1				 42   43
+2 3      		      40 41   44 45
+4 5 6     		   37 38 39   46 47 48
+7 8 9 10		33 34 35 36
+11 12 13 14 15       28 29 30 31 32
+16 17 18 19 20 21 22 23 24 25 26 27
+
+:)
+
+
+
+
+xquery version "1.0-ml";
+
+declare function local:addpaddingToString($string, $padchar, $length) {
+  substring(
+    string-join(
+    ($string, for $i in 1 to $length return $padchar),'')
+    ,1,$length)
+};
+
+declare function local:getRightPattern($line, $max, $number) {
+    fn:reverse(for $i in 1 to $line
+    let $length := fn:string-length(xs:string($max)) 
+    return let $sum := if($i eq 1 ) then $number else sum(for $j in 0 to $i - 2 return $line - $j) + $number
+           let $value  :=  string-join(for $j in 1 to $line - $i + 1
+                              let $sumValue := if(($sum + $j) le $max) then ($sum + $j) else ''
+                              return local:addpaddingToString(xs:string($sumValue),' ',$length)," ")
+            let $space := string-join(for $j in 1 to $i -1 
+                          return local:addpaddingToString(" ",' ',$length  )," ")
+            return if($i eq 1 ) then  $value else concat($space," ",$value)
+                    )
+};
+
+declare function local:getLeftPattern($line, $max, $number) {
+  for $i in 1 to $line
+  let $length := fn:string-length(xs:string($max))
+  return let $sum := fn:sum(1 to $i - 1) + $number - 1
+         let $value := string-join(for $j in 1 to $i 
+                         let $sumValue := if(($j + $sum) le $max) then ($j + $sum) else ''
+                        return local:addpaddingToString(xs:string($sumValue),' ',$length)," ")
+         let $space  := string-join(for $j in 1 to $line - $i 
+                         return local:addpaddingToString("",' ',$length)," ")
+         return concat($value," ",$space)
+};
+
+declare function local:generatePattern($line,$max,$number,$sum,$res) {
+
+    let $left := local:getLeftPattern($line,$max,$number)
+    
+    let $right  := local:getRightPattern($line,$max,($number + $sum - 1))
+    
+    let $result := for $i in 1 to $line
+                    return if($i eq $line) then concat($res[$i],"  ",$left[$i],$right[$i])
+                          else concat($res[$i],"  ",$left[$i]," ",$right[$i])
+    let $sumValue := $number  + ($sum * 2)  
+    return if($sumValue gt $max) then ($result) else (local:generatePattern($line, $max, $sumValue ,$sum, $result))
+    
+};
+
+
+let $line  := 1
+let $max := 24
+let $sum := sum(1 to $line)
+return string-join(local:generatePattern($line, $max, 1, $sum, ''), "&#10;")
