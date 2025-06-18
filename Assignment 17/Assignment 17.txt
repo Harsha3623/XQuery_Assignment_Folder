@@ -1,0 +1,152 @@
+xquery version "1.0-ml";
+
+import module namespace admin = "http://marklogic.com/xdmp/admin"
+		  at "/MarkLogic/admin.xqy";
+
+
+
+declare function local:getIntersectData($authorElement,$bookElements) {
+
+    let $data := if(exists($bookElements/*[local-name(.) eq local-name($authorElement)])) then () else $authorElement 
+     return  $data        
+};
+
+
+declare function local:getRandomElements($authorName) {
+    let $data  := xdmp:invoke-function(
+                                      function() { cts:search(fn:collection("database1"),
+                                                              cts:path-range-query("root/author","=",$authorName)) },
+                                     <options xmlns="xdmp:eval">
+                                              <database>{xdmp:database("database1")}</database>
+                                      </options> )/root/*[local-name(.) ne "author"] 
+     let $random := xdmp:random(5) + 1 
+     let $elements := for $i in 1 to $random
+                         return $data[$i]
+     return $elements
+};
+
+declare function local:writeAuthor() {
+       
+         for $i in 1 to 100
+                let $uri  := "test/cts/author"||$i||".xml"
+                let $data  := element root {
+                                  element author {"author"||$i},
+                                  for $j in 1 to 6 
+                                  return element {"element"||$j}{xdmp:random(99)+1}
+                                }
+                return xdmp:invoke-function(
+                                      function() { xdmp:document-insert($uri,$data,(),("database1")) },
+                                     <options xmlns="xdmp:eval">
+                                              <database>{xdmp:database("database1")}</database>
+                                      </options> ) 
+      
+};
+
+declare function local:writeBooks() {
+
+         for $i in 1 to 1000
+                let $uri  := "test\cts\book"||$i||".xml"
+                let $authorName := "author"||(xdmp:random(99) + 1)
+                let $data := element root {
+                                      element book {
+                                      "book"||$i
+                                      },
+                                      element author {
+                                        $authorName
+                                      },
+                                      element db2Elements {
+                                          local:getRandomElements($authorName)
+                                      }
+                                }
+                return xdmp:invoke-function(
+                                          function() {xdmp:document-insert($uri,$data,(),("database2"))},
+                                          <options xmlns="xdmp:eval">
+                                              <database>{xdmp:database("database2")}</database>
+                                      </options>
+                                      )
+             
+};
+
+declare function local:writeDifferenceData() {
+      let $books := xdmp:invoke-function( function() {fn:collection("database2")},
+                        <options xmlns="xdmp:eval">
+                                <database>{xdmp:database("database2")}</database>
+                        </options>)
+                        
+      return for $book in $books
+        
+                return let $bookName := $book/root/book  
+                       let $authorName := $book/root/author 
+                       let $elements := $book/root/db2Elements
+                       let $authorElements := xdmp:invoke-function(
+                                                          function() {cts:search(
+                                                                                 fn:collection("database1"),
+                                                                               cts:path-range-query("root/author","=",data($authorName)))
+                                                                               },
+                                                   <options xmlns="xdmp:eval">
+                                                              <database>{xdmp:database("database1")}</database>
+                                                      </options>)
+                        let $data := for $i in $authorElements/root/*[local-name(.) ne "author"]
+                                return local:getIntersectData($i,$elements)
+
+                        let $node := element root {
+                                                element book {
+                                                data($bookName)
+                                                },
+                                                element author {
+                                                data($authorName)
+                                                },
+                                                element db3Elements {
+                                                $data
+                                                }
+                                              }
+
+                         return xdmp:invoke-function(
+                                         function() {xdmp:document-insert(
+                                                                     "test/cts/difference/"||data($bookName)||".xml",
+                                                                     $node,
+                                                                     (),
+                                                                     ("database3")
+                                                                     )
+                                                       },
+                                                <options xmlns="xdmp:eval">
+                                                        <database>{xdmp:database("database3")}</database>
+                                                </options>)       
+
+    
+};
+let $_ := (local:writeAuthor(),local:writeBooks(),local:writeDifferenceData())
+let $authors := xdmp:invoke-function(
+                    function() {fn:collection("database1")},
+                                <options xmlns="xdmp:eval">
+                                      <database>{xdmp:database("database1")}</database>
+                              </options>)
+                              
+return for $author in $authors
+        let $authorName := ($author/root/author)
+        let $books := xdmp:invoke-function(
+                                    function() {cts:search(
+                                                    fn:collection("database2"),
+                                                      cts:path-range-query("root/author","=",data($authorName)))
+                                                 },
+                              <options xmlns="xdmp:eval">
+                                      <database>{xdmp:database("database2")}</database>
+                              </options>)
+          return for $book in $books
+                let $difference := xdmp:invoke-function(
+                                    function() {cts:search(
+                                                    fn:collection("database3"),cts:and-query((
+                                                      cts:path-range-query("root/author","=",data($authorName)),
+                                                      cts:path-range-query("root/book","=",data($book/root/book))
+                                                      )))
+                                                 },
+                              <options xmlns="xdmp:eval">
+                                      <database>{xdmp:database("database3")}</database>
+                              </options>)
+                  return element data {
+                              element author {$authorName},
+                              $book/root/book,
+                              $book/root/db2Elements,
+                              $difference/root/db3Elements
+                              }
+        
